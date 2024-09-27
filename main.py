@@ -2,10 +2,12 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-import time
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import csv
+import datetime
+
+dict = {"января":"1","февраля":"2","марта":"3","апреля":"4","мая":"5","июня":"6","июля":"7","августа":"8","сентября":"9","октября":"10","ноября":"11","декабря":"12"}
 
 def parse(p : int = 1):
     p = str(p)
@@ -32,11 +34,22 @@ def parse(p : int = 1):
         cars = driver.find_elements(By.CSS_SELECTOR, '.product-card')  # Проверьте корректность селектора
         # проходимся по всем предложениям
         for car in cars:
-            buf = []
+            buf = []            
+            buf.append(car.find_element(By.CSS_SELECTOR, ".product-card__link").get_attribute("href").split("/")[-2])
             buf.append(car.find_element(By.CSS_SELECTOR, '.product-card__name').text)
             buf.append(car.find_element(By.CSS_SELECTOR, '.price').text)
-            buf.append(car.find_element(By.CSS_SELECTOR, '.btn-text').text)
-            buf.append(car.find_element(By.CSS_SELECTOR, ".product-card__link").get_attribute("href").split("/")[-2])
+            data=car.find_element(By.CSS_SELECTOR, '.btn-text').text
+            if data == "Послезавтра":
+                data = datetime.date.today() + datetime.timedelta(days=2)
+            elif data == "Завтра":
+                data = datetime.date.today() + datetime.timedelta(days=1)
+            else:
+                arr=data.split()
+                d = int(arr[0]) 
+                m = int(dict[arr[1]])
+                a = datetime.datetime.today().year 
+                data = datetime.date(a,m,d) if datetime.datetime(a,m,d)>datetime.datetime.today() else datetime.date(a+1,m,d)
+            buf.append(data.strftime("%m.%d.%y"))
             res.append(buf)
     finally:
         driver.quit()  # Закрываем браузер
